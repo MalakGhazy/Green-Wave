@@ -6,6 +6,7 @@ import { nanoid } from "nanoid";
 import sendEmail, { createHtml } from "../../../utils/email.js";
 import CryptoJS from "crypto-js"
 import { generateToken } from "../../../utils/GenerateAndVerifyToken.js";
+import { addToBlackList } from "../../../utils/tokenClackList.js";
 
 //1]==================== Sign Up =====================
 //=============( hash password , encrypt phone )=================
@@ -100,7 +101,26 @@ export const resetPassword = async(req,res,next)=> {
 }
 //5]==================== Update Password =================
 export const changePass = async(req,res,next)=> {
-
+    const {_id}= req.user
+    if(!req.user){
+        return next (new ErrorClass('User is not authenticated',StatusCodes.UNAUTHORIZED))
+    }
+    const {oldpass,newpass}=req.body
+    const userExist=await userModel.findById(_id)
+    const passcheck=compare(oldpass,userExist.password)
+    if(!passcheck){
+        return next (new ErrorClass(`Invalid Old Password`,StatusCodes.NOT_FOUND))
+    }
+    if(passcheck == newpass){
+        return next(new ErrorClass(`it is the same old password, please try again`,StatusCodes.CONFLICT))
+    }
+    const hashedpassword = hash(newpass)
+    const user = await userModel.findByIdAndUpdate(
+        {_id},
+        {password:hashedpassword},
+        {new : true},
+    )
+    res.status(200).json({message:"Done",user})
 }
 //6]==================== Delete User ===================
 export const softDelete = async(req,res,next)=> {
@@ -118,12 +138,38 @@ export const softDelete = async(req,res,next)=> {
 }
 //7]==================== Update User ===================
 export const UpdateUser = async(req,res,next)=>{
-    
+    const {_id}=req.user
+    if(!req.user){
+        return next(new ErrorClass('User is not authenticated',StatusCodes.UNAUTHORIZED))
+    }
+    const userExist = await userModel.findById(_id)
+    if(req.body.email!=userExist.email){
+        const code = nanoid(6)
+        const html = createHtml(code)
+        sendEmail({to : req.body.email,subject:"New Confirmation Email",html})
+        req.body.code = code
+        req.body.isConfirmed = false
+    }
+    const user = await userModel.findByIdAndUpdate(
+        {_id},
+        req.body,
+        {new : true},
+        res.status(200).json({message:'Done',user})
+    )
 }
 //8]==================== Log out ========================
-
-//9]==================== Refresh Token ==================
-
+export const logout = async(req,res,next)=>{
+    const {authorization}=req.headers
+    if (!authorization) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'Authorization header missing' });
+    }
+    const token = authorization.split(process.env.BEARER_KEY)[1];
+    if (!token) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'Token missing' });
+    }
+    addToBlackList(token)
+    res.status(StatusCodes.OK).json({ message: 'Logged out successfully' });
+}
 
 
 
