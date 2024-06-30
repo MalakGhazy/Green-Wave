@@ -1,7 +1,7 @@
 import Jwt from "jsonwebtoken"
 import userModel from "../../DB/model/user.model.js"
 import { StatusCodes } from "http-status-codes"
-import { isTokenBlackListed } from "../utils/tokenClackList.js"
+import { isTokenBlackListed } from "../utils/tokenBlackList.js"
 export const roles={
     admin:'Admin',
     user:'User'

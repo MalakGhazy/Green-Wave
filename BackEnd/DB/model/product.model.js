@@ -1,9 +1,9 @@
-import { required } from "joi";
-import { Schema, Types } from "mongoose";
+import  { Schema, Types, model } from "mongoose";
 
-const productSchema = new Schema({
+const productSchema =new Schema({
     name:{type:String , required:true , unique : true , lowercase:true},
-    description : {typee:String , required: true , lowercase:true},
+    slug: { type: String, required: true ,unique:true,lowercase:true},
+    description : {type:String , required: true , lowercase:true},
     stock:{type:Number,required:true,default:1}, 
     price:{type:Number,required:true,default:0},
     discount:{type:Number,default:0},

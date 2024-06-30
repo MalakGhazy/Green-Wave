@@ -6,7 +6,7 @@ import { nanoid } from "nanoid";
 import sendEmail, { createHtml } from "../../../utils/email.js";
 import CryptoJS from "crypto-js"
 import { generateToken } from "../../../utils/GenerateAndVerifyToken.js";
-import { addToBlackList } from "../../../utils/tokenClackList.js";
+import { addToBlackList } from "../../../utils/tokenBlackList.js";
 
 //1]==================== Sign Up =====================
 //=============( hash password , encrypt phone )=================
