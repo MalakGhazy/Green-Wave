@@ -1,20 +1,22 @@
-import { Router } from 'express';
-import {
-    addCategory,
-    updateCategory,
-    deleteCategory,
-    searchCategory,
-    getCategoryById,
-    getAllCategories
-} from './category.controller.js';
 
-const router = Router();
+import { Router } from "express";
+import * as categoryController from "./category.controller.js"
+import { auth } from "../../middleware/auth.js";
 
-router.post('/category', addCategory);
-router.put('/category/:categoryId', updateCategory);
-router.delete('/category/:categoryId', deleteCategory);
-router.get('/category/search', searchCategory);
-router.get('/category/:categoryId', getCategoryById);
-router.get('/categories', getAllCategories);
+const router=Router()
 
-export default router;
+router.post('/add-category',auth(),categoryController.addCategory)
+
+router.put('/update/:categoryId',auth(),categoryController.updateCategory)
+
+router.delete('/delete/:categoryId',auth(),categoryController.DeleteCategory)
+
+router.get('/getbyid/:categoryId',categoryController.getById)
+
+router.get('/search/:searchkey',categoryController.SearchByName)
+
+
+//router.get('/getall',categoryController.getAllCategories)
+
+
+export default router 

@@ -1,8 +1,9 @@
-import { Schema, Types, model } from "mongoose";
+import mongoose, { Schema, Types, model } from "mongoose";
 
 const brandSchema = new Schema({
     name:{type:String,required:true,unique:true,lowercase:true},
-    image:{type:Object}, // Logo
+    slug: { type: String, required: true ,unique:true,lowercase:true},
+    //image:{type:Object}, // Logo
     createdBy:{ type : Types.ObjectId , ref : 'User',required : true}
 },{
     timestamps:true

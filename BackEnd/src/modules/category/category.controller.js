@@ -1,81 +1,88 @@
-import Category from '../../../DB/model/category.model.js';
 
-// 1] Add Category
-export const addCategory = async (req, res) => {
-    try {
-        const { name, description, createdBy } = req.body;
-        const category = new Category({ name, description, createdBy });
-        await category.save();
-        res.status(201).json({ message: 'Category added successfully', category });
-    } catch (error) {
-        res.status(400).json({ message: error.message });
+import slugify from "slugify"
+import categoryModel from "../../../DB/model/category.model.js"
+import { ErrorClass } from "../../utils/errorClass.js"
+import { StatusCodes } from "http-status-codes"
+import { ApiFeatures } from "../../utils/apiFeatures.js"
+//1]=================Add Category=================
+export const addCategory = async(req,res,next)=>{
+    let{name}= req.body
+    const userId=req.user._id
+    const isExist = await categoryModel.findOne({name})
+    if(isExist){
+        return next (new ErrorClass(`Category ${name} already exists`,StatusCodes.NOT_FOUND))
     }
-};
-
-// 2] Update Category
-export const updateCategory = async (req, res) => {
-    try {
-        const { categoryId } = req.params;
-        const { name, description } = req.body;
-        const category = await Category.findByIdAndUpdate(
-            categoryId,
-            { name, description },
-            { new: true }
-        );
-        if (!category) {
-            return res.status(404).json({ message: 'Category not found' });
+    const category= await categoryModel.create({
+        name,
+        slug:slugify(name),
+        createdBy:userId
+    })
+    res.status(StatusCodes.CREATED).json({message:"Done",category})
+}
+//2]================= Update Category =================
+export const updateCategory = async(req,res,next)=>{
+    const{categoryId}=req.params
+    const category = await categoryModel.findById(categoryId)
+    if(!category){
+        return next (new ErrorClass('This Category is not found',StatusCodes.NOT_FOUND))
+    }
+    if(req.body.name){
+        if(category.name == req.body.name){
+            return next (new ErrorClass('Sorry , we can not update category name with the same old name.',StatusCodes.NOT_FOUND))
         }
-        res.status(200).json({ message: 'Category updated successfully', category });
-    } catch (error) {
-        res.status(400).json({ message: error.message });
-    }
-};
-
-// 3] Delete Category
-export const deleteCategory = async (req, res) => {
-    try {
-        const { categoryId } = req.params;
-        const category = await Category.findByIdAndDelete(categoryId);
-        if (!category) {
-            return res.status(404).json({ message: 'Category not found' });
+        if(await categoryModel.findOne({name:req.body.name}))
+        {
+            return next (new ErrorClass('Duplicated Category name',StatusCodes.NOT_FOUND))
         }
-        res.status(200).json({ message: 'Category deleted successfully' });
-    } catch (error) {
-        res.status(400).json({ message: error.message });
+        category.name=req.body.name
+        category.slug=slugify(req.body.name,'_')
     }
-};
-
-// 4] Search Category
-export const searchCategory = async (req, res) => {
-    try {
-        const { query } = req.query;
-        const categories = await Category.find({ name: { $regex: query, $options: 'i' } });
-        res.status(200).json(categories);
-    } catch (error) {
-        res.status(400).json({ message: error.message });
+    await category.save()
+    return res.status(StatusCodes.ACCEPTED).json({message:"Done",category})
+}
+//3]================= Delete Category ===================
+export const DeleteCategory = async(req,res,next)=>{
+    const {categoryId}=req.params
+    const isExist = await categoryModel.findByIdAndDelete(categoryId)
+    if(!isExist){
+        return next (new ErrorClass('This Category is not found',StatusCodes.NOT_FOUND))
     }
-};
-
-// 5] Get Category By Id
-export const getCategoryById = async (req, res) => {
-    try {
-        const { categoryId } = req.params;
-        const category = await Category.findById(categoryId);
-        if (!category) {
-            return res.status(404).json({ message: 'Category not found' });
+    return res. status(StatusCodes.OK).json({message:"Done",isExist})
+}
+//4]================= Search Category ==================== 
+//============should be replaced by api class =================
+export const SearchByName = async(req,res,next)=>
+    {
+      const {searchkey}=req.query
+      const categories=await categoryModel.find({
+        name:{
+          $regex:`${searchkey}`
         }
-        res.status(200).json(category);
-    } catch (error) {
-        res.status(400).json({ message: error.message });
+      })
+      if(categories.length == 0)
+        {
+           return next (new ErrorClass('This Category is not found',StatusCodes.NOT_FOUND))
+        }
+        return res.status(StatusCodes.OK).json({message:"Found",categories}) 
     }
-};
-
-// 6] Get All Categories
-export const getAllCategories = async (req, res) => {
-    try {
-        const categories = await Category.find();
-        res.status(200).json(categories);
-    } catch (error) {
-        res.status(400).json({ message: error.message });
+//5]================= Get Category By Id =================
+export const getById = async(req,res,next) =>{
+    const {categoryId}=req.params
+    const isExist = await categoryModel.findById(categoryId)
+    if(!isExist){
+        return next (new ErrorClass('This Category is not found',StatusCodes.NOT_FOUND))
     }
-};
+    return res.status(StatusCodes.OK).json({message:"Found",isExist}) 
+}
+//6]================= Get All Categories =================
+export const getAllCategories = async(req,res,next) =>{
+    const selectall = categoryModel.find()
+    const api = new ApiFeatures(selectall,req.quey)
+    .pagination(categoryModel)
+    .sort()
+    .filer()
+    .search()
+    .select()
+    const Categories=await api.mongooseQuery
+    return res.status(StatusCodes.OK).json({message:"Found",Categories}) 
+}

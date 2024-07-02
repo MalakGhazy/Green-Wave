@@ -14,14 +14,13 @@ router.patch('/send-code',authController.sendCode)
 
 router.patch('/reset-pass',authController.resetPassword)
 
-router.patch('/update',)
+router.patch('/update',auth(),authController.UpdateUser)
 
-router.patch('/change-pass')
+router.patch('/change-pass',auth(),authController.changePass)
 
 router.patch('/soft-del',auth(),authController.softDelete)
 
+router.post('/logout',auth(),authController.logout)
 
-//logout
-//refresh token 
 export default router
 

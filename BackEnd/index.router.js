@@ -1,5 +1,8 @@
 import connectDB from "./DB/connection.js";
 import authRouter from "./src/modules/auth/auth.router.js"
+import categoryRouter from "./src/modules/category/category.router.js"
+import brandRouter from "./src/modules/brand/brand.router.js"
+//import productRouter from "./src/modules/product/product.router.js"
 import wasteRouter from "./src/modules/wasteCollection/wasteCollection.router.js"
 import urbanGreeningRouter from './src/modules/urbanGreening/urbanGreening.router.js';
 import wasteReportRouter from "./src/modules/wasteReport/wasteReport.router.js";
@@ -23,6 +26,7 @@ const initApp = (app,express)=>
     app.use('/api', cartRouter);
     //app.use(`/user`,)
     //app.use(`/brand`,)
+
     //app.use(`/article`,)
     app.use('/waste-collection',wasteRouter)
     app.use('/urban-greening', urbanGreeningRouter);
