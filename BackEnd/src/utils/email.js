@@ -84,7 +84,7 @@ export const createHtml=(Text)=>{
                 </body>
                 </html>`
 }
-import nodemailer from "nodemailer";
+import nodemailer from 'nodemailer';
 
 async function sendEmail ({to,subject,html}={}){
     let transporter = nodemailer.createTransport({

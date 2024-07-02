@@ -1,14 +1,16 @@
-import mongoose, { Schema, Types } from "mongoose";
+import mongoose from 'mongoose';
+
+const { Schema, Types } = mongoose;
 
 const categorySchema = new Schema({
-    name: {type:String,required:true,unique:true,lowercase:true},
-    slug: { type: String, required: true ,unique:true,lowercase:true},
-    createdBy : {type:Types.ObjectId , ref :'User',required:true}
-},
-{
-    timestamps:true
-}
-)
-const categoryModel = mongoose.model('Category',categorySchema)
+    name: { type: String, required: true, unique: true, lowercase: true },
+    description: { type: String, required: true, lowercase: true },
+    createdBy: { type: Types.ObjectId, ref: 'User', required: true }
+}, {
+    timestamps: true
+});
 
-export default categoryModel
+const Category = mongoose.model('Category', categorySchema);
+
+export default Category;
+

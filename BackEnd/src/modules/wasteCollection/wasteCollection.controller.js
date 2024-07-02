@@ -26,3 +26,11 @@ export const ScheduleWasteCollection = async(req,res,next)=>{
     }
 }
 //2]================= Get WasteTypes ==================
+export const getWasteTypes = async (req, res, next) => {
+    try {
+        const wasteTypes = ['Plastic', 'Glass', 'Metal', 'Organic'];
+        res.status(200).json(wasteTypes);
+    } catch (error) {
+        res.status(400).send(`Error fetching waste types: ${error.message}`);
+    }
+};
