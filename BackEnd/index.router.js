@@ -1,6 +1,5 @@
 import connectDB from "./DB/connection.js";
 import authRouter from "./src/modules/auth/auth.router.js"
-import categoryRouter from "./src/modules/category/category.router.js"
 import brandRouter from "./src/modules/brand/brand.router.js"
 //import productRouter from "./src/modules/product/product.router.js"
 import wasteRouter from "./src/modules/wasteCollection/wasteCollection.router.js"
@@ -12,6 +11,9 @@ import courseRouter from './src/modules/course/course.router.js';
 import categoryRouter from './src/modules/category/category.router.js';
 import cartRouter from './src/modules/cart/cart.router.js';
 import { globalErrorHandling } from "./src/utils/errorHandling.js";
+import bookRouter from './src/modules/book/book.router.js';
+import articleRouter from './src/modules/article/article.router.js';
+
 
 const initApp = (app,express)=>
 {
@@ -31,7 +33,8 @@ const initApp = (app,express)=>
     app.use('/waste-collection',wasteRouter)
     app.use('/urban-greening', urbanGreeningRouter);
     app.use('/waste-reporting', wasteReportRouter);
-
+    app.use('/api', bookRouter);
+    app.use('/api', articleRouter);
     app.all('*',(req,res,next)=>{
         res.send("In-valid Routing please check URL or Method")
     })
