@@ -140,8 +140,8 @@ export const createOrder = async(req,res,next)=>{
             metadata:{
                 orderId:order._id.toString()
             },
-            success_url:`http://localhost:3000/api/payments/complete?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `http://localhost:3000/api/payments/cancel`,
+            success_url:`http://localhost:3000/order/complete?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `http://localhost:3000/order/cancel`,
             discounts:req.body.StripeCoupon?[{coupon:req.body.StripeCoupon}]:[],
             line_items:existedItems.map(element=>{
                 return{
