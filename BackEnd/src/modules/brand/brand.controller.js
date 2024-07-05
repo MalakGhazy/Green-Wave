@@ -9,7 +9,7 @@ export const addBrand = async(req,res,next)=>{
     let{name}=req.body
     const userId=req.user._id
     const isExist = await brandModel.findOne({name})
-    if(!isExist){
+    if(isExist){
         return next (new ErrorClass(`Brand ${name} already exists`))
     }
     const brand = await brandModel.create({
@@ -90,5 +90,12 @@ export const getAllBrands = async(req,res,next)=>
       .search()
       .select()
       const brands = await api.mongooseQuery
-      res.status(StatusCodes.OK).json({message:"Found",brands})
+      res.status(StatusCodes.OK).json({
+        message:"Found",
+        brands,
+        count : api.queryData.count,
+        totalPages: api.queryData.totalPages,
+        next:api.queryData.next,
+        previous:api.queryData.previous
+      })
     }

@@ -15,8 +15,7 @@ router.get('/getbyid/:categoryId',categoryController.getById)
 
 router.get('/search/:searchkey',categoryController.SearchByName)
 
-
-//router.get('/getall',categoryController.getAllCategories)
+router.get('/getall',categoryController.getAllCategories)
 
 
 export default router 

@@ -11,6 +11,6 @@ const bookSchema = new mongoose.Schema({
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
 }, { timestamps: true });
 
-const Book = mongoose.model('Book', bookSchema);
+const bookModel = mongoose.model('Book', bookSchema);
 
-export default Book;
+export default bookModel;

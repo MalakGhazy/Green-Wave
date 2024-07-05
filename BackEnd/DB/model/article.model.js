@@ -10,6 +10,6 @@ const articleSchema = new mongoose.Schema({
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
 }, { timestamps: true });
 
-const Article = mongoose.model('Article', articleSchema);
+const articleModel = mongoose.model('Article', articleSchema);
 
-export default Article;
+export default articleModel;

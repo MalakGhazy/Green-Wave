@@ -1,4 +1,4 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose, { Schema, Types } from "mongoose";
 
 const userSchema = new Schema(
     {
@@ -41,6 +41,10 @@ const userSchema = new Schema(
             type:Number,
             default : 0
 
+        },
+        favorites:{
+            type:Types.ObjectId,
+            ref:'Product'
         },
         isConfirmed : {
             type:Boolean,

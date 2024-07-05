@@ -6,7 +6,7 @@ export class ApiFeatures{
 
     //Pagination
     pagination =(model)=>{
-        let{size,page}=this.queryData;
+        let{page,size}=this.queryData;
         if(!size||size<=0) size = 5
         if(!page||page<=0) page = 1
         let num = size*(page-1)
@@ -21,11 +21,12 @@ export class ApiFeatures{
             if(page>1){
                 this.queryData.previous=Number(page-1)
             }
+            this.queryData.count= value
         })
         return this
     }
 
-    filer=() =>{
+    filter=() =>{
         const excludedQuery = ['page','size','sort','searchkey','fields']
         let filterQuery={...this.queryData}
         excludedQuery.forEach(ele => {
@@ -37,8 +38,12 @@ export class ApiFeatures{
     }
 
     sort=()=>{
-        this.queryData.sort=this.queryData.sort?.replace(/,/g,' ')
-        this.mongooseQuery.find(filterQuery)
+        /*this.queryData.sort=this.queryData.sort?.replace(/,/g,' ')
+        this.mongooseQuery.find(filterQuery)*/
+        if (this.queryData.sort) {
+            const sortBy = this.queryData.sort.replace(/,/g, ' ');
+            this.mongooseQuery.sort(sortBy);
+        }
         return this
     }
 

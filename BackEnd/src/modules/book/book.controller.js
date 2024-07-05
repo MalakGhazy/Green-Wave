@@ -1,10 +1,10 @@
-import Book from '../../../DB/model/book.model.js';
+import bookModel from '../../../DB/model/book.model.js';
 
 // 1] Add Book
 export const addBook = async (req, res) => {
     try {
         const { title, author, genre, publishedDate, price, description, coverImage, createdBy } = req.body;
-        const book = new Book({ title, author, genre, publishedDate, price, description, coverImage, createdBy });
+        const book = new bookModel({ title, author, genre, publishedDate, price, description, coverImage, createdBy });
         await book.save();
         res.status(201).json({ message: 'Book added successfully', book });
     } catch (error) {
@@ -17,7 +17,7 @@ export const updateBook = async (req, res) => {
     try {
         const { bookId } = req.params;
         const { title, author, genre, publishedDate, price, description, coverImage } = req.body;
-        const book = await Book.findByIdAndUpdate(
+        const book = await bookModel.findByIdAndUpdate(
             bookId,
             { title, author, genre, publishedDate, price, description, coverImage },
             { new: true }
@@ -35,7 +35,7 @@ export const updateBook = async (req, res) => {
 export const deleteBook = async (req, res) => {
     try {
         const { bookId } = req.params;
-        const book = await Book.findByIdAndDelete(bookId);
+        const book = await bookModel.findByIdAndDelete(bookId);
         if (!book) {
             return res.status(404).json({ message: 'Book not found' });
         }
@@ -49,7 +49,7 @@ export const deleteBook = async (req, res) => {
 export const searchBooks = async (req, res) => {
     try {
         const { query } = req.query;
-        const books = await Book.find({ title: { $regex: query, $options: 'i' } });
+        const books = await bookModel.find({ title: { $regex: query, $options: 'i' } });
         res.status(200).json(books);
     } catch (error) {
         res.status(400).json({ message: error.message });
@@ -60,7 +60,7 @@ export const searchBooks = async (req, res) => {
 export const getBookById = async (req, res) => {
     try {
         const { bookId } = req.params;
-        const book = await Book.findById(bookId);
+        const book = await bookModel.findById(bookId);
         if (!book) {
             return res.status(404).json({ message: 'Book not found' });
         }
@@ -73,7 +73,7 @@ export const getBookById = async (req, res) => {
 // 6] Get All Books
 export const getAllBooks = async (req, res) => {
     try {
-        const books = await Book.find();
+        const books = await bookModel.find();
         res.status(200).json(books);
     } catch (error) {
         res.status(400).json({ message: error.message });

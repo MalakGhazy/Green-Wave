@@ -1,10 +1,10 @@
-import Article from '../../../DB/model/article.model.js';
+import articleModel from '../../../DB/model/article.model.js';
 
 // 1] Add Article
 export const addArticle = async (req, res) => {
     try {
         const { title, content, author, tags, publishedDate, coverImage, createdBy } = req.body;
-        const article = new Article({ title, content, author, tags, publishedDate, coverImage, createdBy });
+        const article = new articleModel({ title, content, author, tags, publishedDate, coverImage, createdBy });
         await article.save();
         res.status(201).json({ message: 'Article added successfully', article });
     } catch (error) {
@@ -17,7 +17,7 @@ export const updateArticle = async (req, res) => {
     try {
         const { articleId } = req.params;
         const { title, content, author, tags, publishedDate, coverImage } = req.body;
-        const article = await Article.findByIdAndUpdate(
+        const article = await articleModel.findByIdAndUpdate(
             articleId,
             { title, content, author, tags, publishedDate, coverImage },
             { new: true }
@@ -35,7 +35,7 @@ export const updateArticle = async (req, res) => {
 export const deleteArticle = async (req, res) => {
     try {
         const { articleId } = req.params;
-        const article = await Article.findByIdAndDelete(articleId);
+        const article = await articleModel.findByIdAndDelete(articleId);
         if (!article) {
             return res.status(404).json({ message: 'Article not found' });
         }
@@ -49,7 +49,7 @@ export const deleteArticle = async (req, res) => {
 export const searchArticles = async (req, res) => {
     try {
         const { query } = req.query;
-        const articles = await Article.find({ title: { $regex: query, $options: 'i' } });
+        const articles = await articleModel.find({ title: { $regex: query, $options: 'i' } });
         res.status(200).json(articles);
     } catch (error) {
         res.status(400).json({ message: error.message });
@@ -60,7 +60,7 @@ export const searchArticles = async (req, res) => {
 export const getArticleById = async (req, res) => {
     try {
         const { articleId } = req.params;
-        const article = await Article.findById(articleId);
+        const article = await articleModel.findById(articleId);
         if (!article) {
             return res.status(404).json({ message: 'Article not found' });
         }
@@ -73,7 +73,7 @@ export const getArticleById = async (req, res) => {
 // 6] Get All Articles
 export const getAllArticles = async (req, res) => {
     try {
-        const articles = await Article.find();
+        const articles = await articleModel.find();
         res.status(200).json(articles);
     } catch (error) {
         res.status(400).json({ message: error.message });

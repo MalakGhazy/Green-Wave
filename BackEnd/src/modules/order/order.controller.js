@@ -2,7 +2,7 @@ import Order from '../../../DB/model/order.model.js';
 import User from '../../../DB/model/user.model.js';
 import Product from '../../../DB/model/product.model.js';
 
-// Create a new order
+// Create a new order --> complete to checkout.
 export const createOrder = async (req, res) => {
     try {
         const { userId, items } = req.body;
@@ -31,7 +31,7 @@ export const createOrder = async (req, res) => {
     }
 };
 
-// Get all orders for a user
+// Get all orders for a user (Order Hostory)
 export const getUserOrders = async (req, res) => {
     try {
         const { userId } = req.params;
@@ -42,7 +42,7 @@ export const getUserOrders = async (req, res) => {
     }
 };
 
-// Update order status
+// Update order status --> Tracking
 export const updateOrderStatus = async (req, res) => {
     try {
         const { orderId } = req.params;

@@ -77,12 +77,19 @@ export const getById = async(req,res,next) =>{
 //6]================= Get All Categories =================
 export const getAllCategories = async(req,res,next) =>{
     const selectall = categoryModel.find()
-    const api = new ApiFeatures(selectall,req.quey)
+    const api = new ApiFeatures(selectall,req.query)
     .pagination(categoryModel)
     .sort()
-    .filer()
+    .filter()
     .search()
     .select()
     const Categories=await api.mongooseQuery
-    return res.status(StatusCodes.OK).json({message:"Found",Categories}) 
+    return res.status(StatusCodes.OK).json({
+        message:"Found",
+        Categories,
+        count : api.queryData.count,
+        totalPages: api.queryData.totalPages,
+        next:api.queryData.next,
+        previous:api.queryData.previous
+    }) 
 }
