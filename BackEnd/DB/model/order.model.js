@@ -1,7 +1,22 @@
-import mongoose from 'mongoose';
+import  { model, Schema,Types } from 'mongoose';
 
-const { Schema } = mongoose;
-
+const ItemSchema = new Schema({
+    itemType:{
+        type:String,
+        enum:['Product','Book','Course'],
+        required:true
+    },
+    itemId:{type:Schema.Types.ObjectId,required:true},
+    quantity:{
+        type:Number,
+        required:true,
+        min:1
+    },
+    price:{
+        type:Number,
+        required:true
+    }
+});
 const orderSchema = new Schema({
     userId: {
         type: Schema.Types.ObjectId,
@@ -9,29 +24,33 @@ const orderSchema = new Schema({
         required: true
     },
     items: [
-        {
-            productId: {
-                type: Schema.Types.ObjectId,
-                ref: 'Product',
-                required: true
-            },
-            quantity: {
-                type: Number,
-                required: true,
-                min: 1
-            },
-            price: {
-                type: Number,
-                required: true
-            }
-        }
+        ItemSchema
     ],
-    totalAmount: {
-        type: Number,
-        required: true
+    address:{type:String,required:true},
+    phone:{type:String},
+    notes:{type:String},
+    coupon:{
+        type:Types.ObjectId,ref:'Coupon'
+    },
+    price:{
+        type:Number,
+        //required:true
+    },
+    paymentPrice:{
+        type:Number,
+        //required:true
+    },
+    paymentMethod:{
+        type:String,
+        enum:['Cash','Card'],
+        default:'Cash'
     },
     status: {
         type: String,
+        /*
+        enum: ['pending', 'shipped', 'placed', 'canceled', 'delivered', 'rejected', 'refunded'],
+        default: 'placed',
+        */
         enum: ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'],
         default: 'pending'
     },
@@ -41,6 +60,6 @@ const orderSchema = new Schema({
     }
 });
 
-const Order = mongoose.model('Order', orderSchema);
+const orderModel = model('Order', orderSchema);
 
-export default Order;
+export default orderModel;

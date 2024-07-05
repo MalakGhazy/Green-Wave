@@ -7,7 +7,7 @@ const courseSchema = new Schema({
     description: { type: String, required: true, lowercase: true },
     duration: { type: Number, required: true },
     price: { type: Number, required: true, default: 0 },
-    instructor: { type: Types.ObjectId, ref: 'User', required: true },
+    instructor: { type: String, required: true },
     category: { type: Types.ObjectId, ref: 'Category', required: true },
     image: { type: String, required: true },
     rating: { type: Number, default: 0 },

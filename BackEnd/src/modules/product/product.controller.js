@@ -29,7 +29,7 @@ export const addProduct = async (req, res,next) => {
     }
     req.body.slug = slugify(req.body.name)
     req.body.stock =req.body.stock
-    //req.body.paymentPrice = (req.body.price -(req.body.price * ((req.body.discount || 0) /100)))
+    req.body.paymentPrice = (req.body.price -(req.body.price * ((req.body.discount || 0) /100)))
     
     //res.json({files:req.files})
    // console.log(req)

@@ -9,6 +9,7 @@ import productRouter from './src/modules/product/product.router.js';
 import courseRouter from './src/modules/course/course.router.js';
 import categoryRouter from './src/modules/category/category.router.js';
 import cartRouter from './src/modules/cart/cart.router.js';
+import paymentRouter from './src/modules/payment/payment.router.js'
 import { globalErrorHandling } from "./src/utils/errorHandling.js";
 import bookRouter from './src/modules/book/book.router.js';
 import articleRouter from './src/modules/article/article.router.js';
@@ -21,6 +22,7 @@ const initApp = (app,express)=>
     //Setup API Routing
     app.use(`/auth`,authRouter)
     app.use('/order', orderRouter);
+    app.use('/payment',paymentRouter);
     app.use('/product', productRouter);
     app.use('/course', courseRouter);
     app.use('/category', categoryRouter);
