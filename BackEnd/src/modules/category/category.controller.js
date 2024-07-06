@@ -6,7 +6,7 @@ import { StatusCodes } from "http-status-codes"
 import { ApiFeatures } from "../../utils/apiFeatures.js"
 //1]=================Add Category=================
 export const addCategory = async(req,res,next)=>{
-    let{name}= req.body
+    let{name,description}= req.body
     const userId=req.user._id
     const isExist = await categoryModel.findOne({name})
     if(isExist){
@@ -14,6 +14,7 @@ export const addCategory = async(req,res,next)=>{
     }
     const category= await categoryModel.create({
         name,
+        description,
         slug:slugify(name),
         createdBy:userId
     })

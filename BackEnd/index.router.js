@@ -12,6 +12,8 @@ import cartRouter from './src/modules/cart/cart.router.js';
 import { globalErrorHandling } from "./src/utils/errorHandling.js";
 import bookRouter from './src/modules/book/book.router.js';
 import articleRouter from './src/modules/article/article.router.js';
+import reviewRouter from './src/modules/review/review.router.js'
+import couponRouter from './src/modules/coupon/coupon.router.js'
 
 
 const initApp = (app,express)=>
@@ -20,19 +22,19 @@ const initApp = (app,express)=>
     app.use(express.json({}))
     //Setup API Routing
     app.use(`/auth`,authRouter)
-    app.use('/order', orderRouter);
-    //app.use('/payment');
-    app.use('/product', productRouter);
+    app.use('/article', articleRouter);
+    app.use(`/brand`,brandRouter)
+    app.use('/book', bookRouter);
+    app.use('/coupon',couponRouter);
     app.use('/course', courseRouter);
     app.use('/category', categoryRouter);
     app.use('/cart', cartRouter);
-    //app.use(`/user`,)
-    app.use(`/brand`,brandRouter)
-    app.use('/waste-collection',wasteRouter)
+    app.use('/order', orderRouter);
+    app.use('/product', productRouter);
+    app.use('/review',reviewRouter)
     app.use('/urban-greening', urbanGreeningRouter);
     app.use('/waste-reporting', wasteReportRouter);
-    app.use('/book', bookRouter);
-    app.use('/article', articleRouter);
+    app.use('/waste-collection',wasteRouter)
     app.all('*',(req,res,next)=>{
         res.send("In-valid Routing please check URL or Method")
     })

@@ -12,7 +12,6 @@ export const addItemToCart = async (req,res,next) => {
     if (!productId && !bookId && !courseId) {
         return next(new Error("No item provided to add to cart", StatusCodes.NOT_FOUND));
     }
-
     let itemId;
     let itemModel;
     // Determine which item type is being added

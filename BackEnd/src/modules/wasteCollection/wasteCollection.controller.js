@@ -1,20 +1,26 @@
 import userModel from "../../../DB/model/user.model.js";
-import wasteCollectionModel from "../../../DB/model/wasteCollection.moel.js";
+import wasteCollectionModel from "../../../DB/model/wasteCollection.model.js";
 import sendEmail, { createHtml } from "../../utils/email.js";
 
 //1]================== Schedule Waste Collection  ========================
 export const ScheduleWasteCollection = async(req,res,next)=>{
     try{
-        const {userId,wasteType,date,time}= req.body;
-    const user = await userModel.findById(userId)
-    const appointment = new wasteCollectionModel({
+        const userId=req.user._id
+        const {wasteType,amount,date,time}= req.body;
+        const user = await userModel.findById(userId)
+        const appointment = new wasteCollectionModel({
         userId,
         wasteType,
+        amount,
         date,
         time,
         email:user.email
     });
     await appointment.save();
+
+    //user.points = (user.points || 0) + (amount * 10); // Ensure user.points is initialized to 0 if undefined
+    user.points += (amount * 10); // Ensure user.points is initialized to 0 if undefined
+    await user.save();
 
     const html = createHtml(`Your appointment for ${wasteType} waste collection has been scheduled on ${date} at ${time}.`)
     sendEmail({to:user.email,subject:'Waste Collection Appointment Confirmation',html})

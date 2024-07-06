@@ -6,7 +6,7 @@ const courseSchema = new Schema({
     title: { type: String, required: true, unique: true, lowercase: true },
     description: { type: String, required: true, lowercase: true },
     duration: { type: Number, required: true },
-    price: { type: Number, required: true, default: 0 },
+    price: { type: Number, required: true},
     instructor: { type: String, required: true },
     category: { type: Types.ObjectId, ref: 'Category', required: true },
     image: { type: String, required: true },

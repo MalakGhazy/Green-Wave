@@ -21,7 +21,7 @@ export const addBrand = async(req,res,next)=>{
 }
 //2]================= Update Brand =================
 export const updateBrand = async(req,res,next)=>{
-    const{brandID} = req.params
+    const{brandId} = req.params
     const brand=await brandModel.findById(brandId)
     if (!brand)
     {

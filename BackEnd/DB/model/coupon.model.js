@@ -1,13 +1,11 @@
 import { model, Schema, Types } from "mongoose";
 
 const couponSchema = new Schema({
-    code:{type:String,required:true,unique:true,lowercase:true},
+    code:{type:String,required:true,unique:true},
     amount : {type:Number,required:true,min:0,max:100},
-    EXPDate:{type:Date,required:true,min:Date.now()},
-    numofUses:{type:Number},
+    numofUses:{type:Number, default:1},
     createdBy:{type:Types.ObjectId,ref:'User',required:true},
-    //to do after create user
-    //UsedBy:[{ type: Types.ObjectId, ref: 'User', required: true }],
+    UsedBy:[{ type: Types.ObjectId, ref: 'User'}],
 }
 ,
 {

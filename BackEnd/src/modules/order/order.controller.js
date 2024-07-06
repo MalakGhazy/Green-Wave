@@ -1,11 +1,13 @@
 import Stripe from "stripe";
 import cartModel from "../../../DB/model/cart.model.js";
 import { couponModel } from "../../../DB/model/coupon.model.js";
-import orderModel from "../../../DB/model/order.model.js";
+//import orderModel from "../../../DB/model/order.model.js";
 import productModel from "../../../DB/model/product.model.js";
 import { StatusCodes } from "http-status-codes";
 import bookModel from "../../../DB/model/book.model.js";
 import courseModel from "../../../DB/model/course.model.js";
+import ordermodel from "../../../DB/model/order.js";
+import { ErrorClass } from "../../utils/errorClass.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 
@@ -18,7 +20,7 @@ export const createOrder = async(req,res,next)=>{
     if(!items)
     {
         if(!cart.items.length){
-            return next(new Error('CART IS EMPTY!',StatusCodes.NOT_FOUND))
+            return next(new ErrorClass('CART IS EMPTY!',StatusCodes.NOT_FOUND))
         }
         items=cart.items
     }
@@ -26,53 +28,42 @@ export const createOrder = async(req,res,next)=>{
     const existedItems=[]
     const foundedIds=[]
     const arrayForStock=[]
-    let price=0
+    let totalPrice = 0;
 
     for(let item of items){
-        switch(item.itemType){
-            case 'Product':
-                itemTypeModel=productModel;
-                break;
-            case 'Book':
-                itemTypeModel=bookModel;
-                break;
-            case 'Course':
-                itemTypeModel=courseModel;
-                break;
-            default:
-                return next(new Error('Invalid item type', StatusCodes.BAD_REQUEST));
+        if (item.product && item.product.productId) {
+            itemTypeModel = productModel;
+            product = await itemTypeModel.findById(item.product.productId);
         }
-        try{
-
-            product=await itemTypeModel.findById(item.itemId);
-        if(!product){
-            return next(new Error(`${item.itemType} with id ${item.itemId} not found`, StatusCodes.NOT_FOUND));
+        else if (item.book && item.book.bookId) {
+            itemTypeModel = bookModel;
+            product = await itemTypeModel.findById(item.book.bookId);
+        } 
+        else if (item.course && item.course.courseId) {
+            itemTypeModel = courseModel;
+            product = await itemTypeModel.findById(item.course.courseId);
+        } 
+        else {
+            return next(new ErrorClass('Invalid item type', StatusCodes.BAD_REQUEST));
+        }
+        if (!product) {
+            return next(new ErrorClass(`Item with id ${item.itemId} not found`, StatusCodes.NOT_FOUND));
         }
 
         existedItems.push({
-            itemType:item.itemType,
-            itemId:product._id,
             quantity:item.quantity,
-            price:product.price * item.quantity,
-
+            totalPrice:product.price * item.quantity
         });
-
         foundedIds.push(product._id);
 
-        if(item.itemType!== 'Course'){ 
-            //Courses does not have stock
+        if (!item.course) { // Courses do not have stock
             arrayForStock.push({
-                _id:product._id,
-                quantity:item.quantity,
+                _id: product._id,
+                quantity: item.quantity,
             });
-            price+=product.price * item.quantity;
+            totalPrice += item.price * item.quantity;
         }
-        }
-        catch(error){
-            return next(new Error(`Error fetching ${item.itemType} with id ${item.itemId}: ${error.message}`, StatusCodes.INTERNAL_SERVER_ERROR));
-        } 
     }
-
     // Apply coupon if exists
     let discount=0;
     if(coupon){
@@ -80,14 +71,14 @@ export const createOrder = async(req,res,next)=>{
             const foundCoupon = await couponModel.findById(coupon);
         if(foundCoupon && foundCoupon.$isValid){
             discount=foundCoupon.discount;
-            price -= discount
+            totalPrice -= discount
         }
         else{
-            return next(new Error('Invalid or expired coupon', StatusCodes.BAD_REQUEST));
+            return next(new ErrorClass('Invalid or expired coupon', StatusCodes.BAD_REQUEST));
         }
         } 
         catch (error) {
-            return next(new Error(`Error fetching coupon: ${error.message}`, StatusCodes.INTERNAL_SERVER_ERROR));
+            return next(new ErrorClass(`Error fetching coupon: ${error.message}`, StatusCodes.INTERNAL_SERVER_ERROR));
         }
     }
 
@@ -97,31 +88,34 @@ export const createOrder = async(req,res,next)=>{
         try{
             const product = await itemTypeModel.findById(item._id)
         if(!product){
-            return next(new Error(`Item with id ${item._id} not found`, StatusCodes.NOT_FOUND));
+            return next(new ErrorClass(`Item with id ${item._id} not found`, StatusCodes.NOT_FOUND));
         }
         if(product.stock < item.quantity){
-            return next(new Error(`Item with id ${item._id} has insufficient stock`, StatusCodes.BAD_REQUEST));
+            return next(new ErrorClass(`Item with id ${item._id} has insufficient stock`, StatusCodes.BAD_REQUEST));
         }
         product.stock -= item.quantity;
         await product.save()
         }
         catch(error)
         {
-            return next(new Error(`Error updating stock for item with id ${item._id}: ${error.message}`, StatusCodes.INTERNAL_SERVER_ERROR));
+            return next(new ErrorClass(`Error updating stock for item with id ${item._id}: ${error.message}`, StatusCodes.INTERNAL_SERVER_ERROR));
         }
     }
 
-    const order = new orderModel({
+    const order = new ordermodel({
         userId:req.user._id,
         items:existedItems,
         address,
         phone,
         notes,
         coupon,
-        price,
-        paymentPrice:price,
+        price :totalPrice || 0,
+        paymentPrice:totalPrice || 0,
         paymentMethod,
     });
+    console.log(totalPrice);
+
+
     
     // Use Stripe For Payment
     if(paymentMethod === 'Card'){
@@ -148,9 +142,9 @@ export const createOrder = async(req,res,next)=>{
                     price_data:{
                         currency:'EGP',
                         product_data:{
-                            name:element.product.name
+                            name: element.product ? element.product.name : element.book ? element.book.title : element.course.title
                         },
-                        unit_amount:(element.product.paymentPrice)*100
+                        unit_amount: (element.product ? element.product.paymentPrice : element.book ? element.book.price : element.course.price) * 100
                     },
                     quantity:element.quantity
                 }
@@ -167,16 +161,16 @@ export const createOrder = async(req,res,next)=>{
         }
         if(req.body.items){
             const productIds = req.body.items
-            .filter(item => item.itemType === 'Product')
-            .map(item=>item.itemId);
+            .filter(item => item.product && item.product.productId)
+            .map(item=>item.product.productId);
     
             const bookIds = req.body.items
-            .filter(item => item.itemType === 'Book')
-            .map(item=>item.itemId);
+            .filter(item => item.book && item.book.bookId)
+            .map(item=>item.book.bookId);
     
             const courseIds = req.body.items
-            .filter(item => item.itemType === 'Course')
-            .map(item=>item.itemId);
+            .filter(item => item.course && item.course.courseId)
+            .map(item=>item.course.courseId);
     
             // Remove Products
             if(productIds.length>0){
@@ -185,7 +179,7 @@ export const createOrder = async(req,res,next)=>{
                     {
                         $pull:{
                             items:{
-                                productId:{
+                                'product.productId':{
                                     $in: productIds
                                 }
                             }
@@ -201,7 +195,7 @@ export const createOrder = async(req,res,next)=>{
                     {
                         $pull:{
                             items:{
-                                bookId: {
+                                'book.bookId': {
                                     $in : bookIds
                                 }
                             }
@@ -217,7 +211,7 @@ export const createOrder = async(req,res,next)=>{
                     {
                         $pull:{
                             items:{
-                                courseId:{
+                                'course.courseId':{
                                     $in:courseIds
                                 }
                             }
@@ -234,23 +228,23 @@ export const createOrder = async(req,res,next)=>{
     }
     catch(error)
     {
-        return next(new Error(`Error processing payment: ${error.message}`, StatusCodes.INTERNAL_SERVER_ERROR));
+        return next(new ErrorClass(`Error processing payment: ${error.message}`, StatusCodes.INTERNAL_SERVER_ERROR));
     }
     }
 
     // For Cash payment or other methods without Stripe
     if(req.body.items){
         const productIds = req.body.items
-        .filter(item => item.itemType === 'Product')
-        .map(item=>item.itemId);
+        .filter(item => item.product && item.product.productId)
+        .map(item=>item.product.productId);
 
         const bookIds = req.body.items
-        .filter(item => item.itemType === 'Book')
-        .map(item=>item.itemId);
+        .filter(item => item.book && item.book.bookId)
+        .map(item=>item.book.bookId);
 
         const courseIds = req.body.items
-        .filter(item => item.itemType === 'Course')
-        .map(item=>item.itemId);
+        .filter(item => item.course && item.course.courseId)
+        .map(item=>item.course.courseId);
 
         // Remove Products
         if(productIds.length>0){
@@ -259,7 +253,7 @@ export const createOrder = async(req,res,next)=>{
                 {
                     $pull:{
                         items:{
-                            productId:{
+                            'product.productId':{
                                 $in: productIds
                             }
                         }
@@ -275,7 +269,7 @@ export const createOrder = async(req,res,next)=>{
                 {
                     $pull:{
                         items:{
-                            bookId: {
+                            'book.bookId': {
                                 $in : bookIds
                             }
                         }
@@ -291,7 +285,7 @@ export const createOrder = async(req,res,next)=>{
                 {
                     $pull:{
                         items:{
-                            courseId:{
+                            'course.courseId':{
                                 $in:courseIds
                             }
                         }
@@ -316,10 +310,11 @@ export const createOrder = async(req,res,next)=>{
     }
     // Save Order
     try {
+        await order.validate();
         await order.save();
         res.status(StatusCodes.CREATED).json({ order });
     } catch (error) {
-        return next(new Error(`Error saving order: ${error.message}`, StatusCodes.INTERNAL_SERVER_ERROR));
+        return next(new ErrorClass(`Error saving order: ${error.message}`, StatusCodes.INTERNAL_SERVER_ERROR));
     }
     // Coupon Part 
     /*
