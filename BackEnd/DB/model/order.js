@@ -8,7 +8,7 @@ const orderSchema = new Schema({
     },
     items:[{
         product:{
-            productId: { type: Types.ObjectId, ref: 'Product' },
+            productId: { type: Types.ObjectId, ref: 'Product',required: false },
             name:{type: String},
             price: { type: Number},
             paymentPrice: { type: Number},
@@ -18,7 +18,7 @@ const orderSchema = new Schema({
             },
         },
         book:{
-            bookId:{type: Types.ObjectId, ref:'Book'},
+            bookId:{type: Types.ObjectId, ref:'Book',required: false},
             title: { type: String},
             author: { type: String },
             genre: { type: String },
@@ -29,7 +29,7 @@ const orderSchema = new Schema({
             },
         },
         course:{
-            courseId:{type: Types.ObjectId, ref:'Course'},
+            courseId:{type: Types.ObjectId, ref:'Course',required: false},
             title: { type: String},
             price: { type: Number},
             quantity:{

@@ -1,7 +1,6 @@
 import Stripe from "stripe";
 import cartModel from "../../../DB/model/cart.model.js";
 import { couponModel } from "../../../DB/model/coupon.model.js";
-//import orderModel from "../../../DB/model/order.model.js";
 import productModel from "../../../DB/model/product.model.js";
 import { StatusCodes } from "http-status-codes";
 import bookModel from "../../../DB/model/book.model.js";
@@ -15,6 +14,25 @@ export const createOrder = async(req,res,next)=>{
     let product,itemTypeModel;
     let{items,address,phone,notes,coupon,paymentMethod}= req.body
     const userId=req.user._id
+    // Coupon Part 
+    
+    if (coupon) {
+        const isCouponExist = await couponModel.findOne({
+            code: coupon,
+        })
+        if (!isCouponExist) {
+            return next(new ErrorClass("in-valid coupon!", 404))
+        }
+        if (isCouponExist.UsedBy.length > isCouponExist.numofUses) 
+        {
+                return next(new ErrorClass("This coupon exceeded the usage limit", 410))
+        }
+        if (isCouponExist.UsedBy.includes(req.user._id)) 
+        {
+                return next(new ErrorClass("You've already claimed this coupon", 410))
+        }
+        req.body.coupon = isCouponExist
+    }
 
     const cart = await cartModel.findOne({userId:req.user._id})
     if(!items)
@@ -28,7 +46,7 @@ export const createOrder = async(req,res,next)=>{
     const existedItems=[]
     const foundedIds=[]
     const arrayForStock=[]
-    let totalPrice = 0;
+    var totalPrice = 0;
 
     for(let item of items){
         if (item.product && item.product.productId) {
@@ -49,10 +67,12 @@ export const createOrder = async(req,res,next)=>{
         if (!product) {
             return next(new ErrorClass(`Item with id ${item.itemId} not found`, StatusCodes.NOT_FOUND));
         }
+        console.log(item);
 
         existedItems.push({
             quantity:item.quantity,
-            totalPrice:product.price * item.quantity
+            totalPrice:product.price * item.quantity,
+            product,
         });
         foundedIds.push(product._id);
 
@@ -61,9 +81,11 @@ export const createOrder = async(req,res,next)=>{
                 _id: product._id,
                 quantity: item.quantity,
             });
-            totalPrice += item.price * item.quantity;
         }
     }
+    existedItems.forEach((ele)=>{
+        totalPrice+=ele.totalPrice
+    })
     // Apply coupon if exists
     let discount=0;
     if(coupon){
@@ -101,7 +123,7 @@ export const createOrder = async(req,res,next)=>{
             return next(new ErrorClass(`Error updating stock for item with id ${item._id}: ${error.message}`, StatusCodes.INTERNAL_SERVER_ERROR));
         }
     }
-
+   
     const order = new ordermodel({
         userId:req.user._id,
         items:existedItems,
@@ -109,13 +131,10 @@ export const createOrder = async(req,res,next)=>{
         phone,
         notes,
         coupon,
-        price :totalPrice || 0,
-        paymentPrice:totalPrice || 0,
+        price :totalPrice,
+        paymentPrice:totalPrice,
         paymentMethod,
     });
-    console.log(totalPrice);
-
-
     
     // Use Stripe For Payment
     if(paymentMethod === 'Card'){
@@ -142,9 +161,9 @@ export const createOrder = async(req,res,next)=>{
                     price_data:{
                         currency:'EGP',
                         product_data:{
-                            name: element.product ? element.product.name : element.book ? element.book.title : element.course.title
+                            name: element.product ? element.product?.name : element.book ? element.book?.title : element.course?.title
                         },
-                        unit_amount: (element.product ? element.product.paymentPrice : element.book ? element.book.price : element.course.price) * 100
+                        unit_amount: (element.product ? element.product?.paymentPrice : element.book ? element.book?.price : element.course?.price) * 100
                     },
                     quantity:element.quantity
                 }
@@ -159,145 +178,37 @@ export const createOrder = async(req,res,next)=>{
                 }
             })
         }
-        if(req.body.items){
-            const productIds = req.body.items
-            .filter(item => item.product && item.product.productId)
-            .map(item=>item.product.productId);
-    
-            const bookIds = req.body.items
-            .filter(item => item.book && item.book.bookId)
-            .map(item=>item.book.bookId);
-    
-            const courseIds = req.body.items
-            .filter(item => item.course && item.course.courseId)
-            .map(item=>item.course.courseId);
-    
-            // Remove Products
-            if(productIds.length>0){
-                await cartModel.updateOne(
-                    {userId:req.user._id},
-                    {
-                        $pull:{
-                            items:{
-                                'product.productId':{
-                                    $in: productIds
-                                }
-                            }
-                        }
-                    }
-                );
-            }
-    
-            // Remove Books
-            if(bookIds.length>0){
-                await cartModel.updateOne(
-                    {userId:req.user._id},
-                    {
-                        $pull:{
-                            items:{
-                                'book.bookId': {
-                                    $in : bookIds
-                                }
-                            }
-                        }
-                    }
-                )
-            }
-    
-            //Remove Courses
-            if(courseIds.length>0){
-                await cartModel.updateOne(
-                    {userId:req.user._id},
-                    {
-                        $pull:{
-                            items:{
-                                'course.courseId':{
-                                    $in:courseIds
-                                }
-                            }
-                        }
-                    }
-                )
-            }
-        }
-        else 
-        {
-            await cartModel.updateOne({userId:req.user._id},{items:[]})
-        }
+
+        // Remove items from cart
+        await cartModel.updateOne(
+            { userId: req.user._id },
+            { $pull: { items: { $or: [{ 'productId': { $in: foundedIds } }, { 'bookId': { $in: foundedIds } }, { 'courseId': { $in: foundedIds } }] } } }
+        );
+
         return res.status(200).json({message:"DONE",order,url:session.url})  
     }
     catch(error)
     {
         return next(new ErrorClass(`Error processing payment: ${error.message}`, StatusCodes.INTERNAL_SERVER_ERROR));
     }
+}
+
+
+ // Remove items from cart
+ await cartModel.updateOne(
+    { userId: req.user._id },
+    { 
+        $pull: { 
+            items: 
+            { $or: 
+                [
+                    { 'productId': { $in: foundedIds } }, 
+                    { 'bookId': { $in: foundedIds } },
+                    { 'courseId': { $in: foundedIds } }
+                ] 
+            } } 
     }
-
-    // For Cash payment or other methods without Stripe
-    if(req.body.items){
-        const productIds = req.body.items
-        .filter(item => item.product && item.product.productId)
-        .map(item=>item.product.productId);
-
-        const bookIds = req.body.items
-        .filter(item => item.book && item.book.bookId)
-        .map(item=>item.book.bookId);
-
-        const courseIds = req.body.items
-        .filter(item => item.course && item.course.courseId)
-        .map(item=>item.course.courseId);
-
-        // Remove Products
-        if(productIds.length>0){
-            await cartModel.updateOne(
-                {userId:req.user._id},
-                {
-                    $pull:{
-                        items:{
-                            'product.productId':{
-                                $in: productIds
-                            }
-                        }
-                    }
-                }
-            );
-        }
-
-        // Remove Books
-        if(bookIds.length>0){
-            await cartModel.updateOne(
-                {userId:req.user._id},
-                {
-                    $pull:{
-                        items:{
-                            'book.bookId': {
-                                $in : bookIds
-                            }
-                        }
-                    }
-                }
-            )
-        }
-
-        //Remove Courses
-        if(courseIds.length>0){
-            await cartModel.updateOne(
-                {userId:req.user._id},
-                {
-                    $pull:{
-                        items:{
-                            'course.courseId':{
-                                $in:courseIds
-                            }
-                        }
-                    }
-                }
-            )
-        }
-    }
-    else 
-    {
-        await cartModel.updateOne({userId:req.user._id},{items:[]})
-    }
+);
 
     // Update coupon usage for cash payments
     if(req.body.coupon){
@@ -316,25 +227,12 @@ export const createOrder = async(req,res,next)=>{
     } catch (error) {
         return next(new ErrorClass(`Error saving order: ${error.message}`, StatusCodes.INTERNAL_SERVER_ERROR));
     }
-    // Coupon Part 
-    /*
-    if (coupon) {
-        const isCouponExist = await couponModel.findOne({
-            code: coupon,
-        })
-        if (!isCouponExist) return next(new ErrorClass("in-valid coupon!", 404))
-        if (isCouponExist.expiryDate < Date.now()) return next(new ErrorClass("Coupon expired!", 410))
-        if (isCouponExist.usedBy.length > isCouponExist.noOfUses) return next(new ErrorClass("This coupon exceeded the usage limit", 410))
-        if (isCouponExist.usedBy.includes(req.user._id)) return next(new ErrorClass("You've already claimed this coupon", 410))
-        req.body.coupon = isCouponExist
-    }
-    */
 }
 // Get all orders for a user (Orders Hostory)
 export const getUserOrders = async (req, res) => {
     try {
         const { userId } = req.user._id;
-        const orders = await orderModel.find({ userId ,
+        const orders = await ordermodel.find({ userId ,
             status:{
                 $nin : ['cancelled']
             }
@@ -351,12 +249,12 @@ export const getUserOrders = async (req, res) => {
 };
 
 // Update order status --> Tracking
-export const updateOrderStatus = async (req, res) => {
+export const updateOrderStatus = async (req, res,next) => {
     try {
         const { orderId } = req.params;
         const { status } = req.body;
 
-        const order = await orderModel.findById(orderId);
+        const order = await ordermodel.findById(orderId);
         if (!order) {
             return res.status(404).json({ message: 'Order not found' });
         }
@@ -374,7 +272,7 @@ export const cancelOrder = async(req,res,next)=>{
     const orderId = req.params.id
     const userId = req.user._id
     const {reason} =  req.body
-    const isOrderExist = await orderModel.findOne({_id:orderId,userId})
+    const isOrderExist = await ordermodel.findOne({_id:orderId,userId})
     if(!isOrderExist){
         return next(new ErrorClass("this order doesn't exist or you do not own this order!", StatusCodes.NOT_FOUND))
     }
@@ -383,11 +281,10 @@ export const cancelOrder = async(req,res,next)=>{
         return next(new ErrorClass("this order has already been delivered", StatusCodes.FORBIDDEN))
     }
     //update the status  & adding the reason
-    await orderModel.findByIdAndUpdate(orderId,
+    await ordermodel.findByIdAndUpdate(orderId,
         {
             status:'cancelled',reason
         }
     )
     return res.status(200).json({message:"Order Cancelled Successfully"})
 }
-     // invoice

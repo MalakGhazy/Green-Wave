@@ -154,8 +154,8 @@ export const UpdateUser = async(req,res,next)=>{
         {_id},
         req.body,
         {new : true},
-        res.status(200).json({message:'Done',user})
     )
+    res.status(200).json({message:'Done',user})
 }
 //8]==================== Log out ========================
 export const logout = async(req,res,next)=>{

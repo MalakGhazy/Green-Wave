@@ -3,13 +3,10 @@ import articleModel from "../../../DB/model/article.model.js";
 import bookModel from "../../../DB/model/book.model.js";
 import courseModel from "../../../DB/model/course.model.js";
 import ordermodel from "../../../DB/model/order.js";
-//import orderModel from "../../../DB/model/order.model.js";
-
 import productModel from "../../../DB/model/product.model.js";
 import reviewModel from "../../../DB/model/review.model.js";
-
 import { ErrorClass } from "../../utils/errorClass.js";
-//============1]Add Review ==================================
+//================= 1]Add Review ==================================
 export const addReview = async(req,res,next) => {
     const {comment,productId,bookId,courseId,articleId}= req.body
 
@@ -19,7 +16,7 @@ export const addReview = async(req,res,next) => {
     let itemId;
     let itemModel;
     // Determine which item type is being added
-     if (productId) {
+    if (productId) {
         itemId = productId;
         itemModel = productModel;
     } else if (bookId) {
@@ -46,12 +43,21 @@ export const addReview = async(req,res,next) => {
         if (alreadyReviewed) {
             return next(new ErrorClass("you already reviewed this product!", 409))
         }
+
+       // Debugging: Check userId and productId
+        console.log(`Checking order for user: ${req.user._id} and product: ${productId}`);
+
         // check order 
         const order = await ordermodel.findOne({
             userId:req.user_id,
             status:'delivered',
             'items.product.productId':productId
         })
+        // Debugging: Log order details
+        console.log(`Order found: ${JSON.stringify(order)}`);
+        
+
+        console.log(order);
         if (!order)  {
             return next(new ErrorClass("you are not authorized to review this order!", 403))
         }
@@ -80,7 +86,9 @@ export const addReview = async(req,res,next) => {
             // add review
         const review = await reviewModel.create({comment,bookId,userId:req.user._id})  
         return res.status(202).json({ message: "Done!", review })  
-    } else if (courseId) {
+    } 
+    else if (courseId) 
+    {
         const alreadyReviewed = await reviewModel.findOne({
             userId: req.user._id,
             courseId: courseId
@@ -98,10 +106,11 @@ export const addReview = async(req,res,next) => {
                 return next(new ErrorClass("you are not authorized to review this order!", 403))
             }
             // add review
-        const review = await reviewModel.create({comment,courseId,userId:req.user._id})  
-        return res.status(202).json({ message: "Done!", review })  
+            const review = await reviewModel.create({comment,courseId,userId:req.user._id})  
+            return res.status(202).json({ message: "Done!", review })  
     }
-    else if (articleId){
+    else if (articleId)
+    {
         const alreadyReviewed = await reviewModel.findOne({
             userId: req.user._id,
             articleId: articleId
