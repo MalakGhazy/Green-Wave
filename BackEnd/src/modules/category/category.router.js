@@ -5,11 +5,11 @@ import { auth, roles } from "../../middleware/auth.js";
 
 const router=Router()
 
-router.post('/add-category',auth([roles.admin]),categoryController.addCategory)
+router.post('/add-category',auth(),categoryController.addCategory)
 
-router.put('/update/:categoryId',auth([roles.admin]),categoryController.updateCategory)
+router.put('/update/:categoryId',auth(),categoryController.updateCategory)
 
-router.delete('/delete/:categoryId',auth([roles.admin]),categoryController.DeleteCategory)
+router.delete('/delete/:categoryId',auth(),categoryController.DeleteCategory)
 
 router.get('/getbyid/:categoryId',categoryController.getById)
 

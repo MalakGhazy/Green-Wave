@@ -8,7 +8,7 @@ export const roles={
 }
 
 Object.freeze(roles)
-export const auth = (roles=[]) => {
+export const auth = () => {
     return async (req,res,next)=>
         {
             const{authorization}=req.headers;
@@ -35,9 +35,9 @@ export const auth = (roles=[]) => {
             if(!authUser){
                 return res.json({message:"Not Registered Account"})
             }
-            if(!roles.includes(authUser.role)){
+            /*if(!roles.includes(authUser.role)){
                 res.status(StatusCodes.UNAUTHORIZED).json({message:"Not Authorized User"})
-            }
+            }*/
             req.user=authUser;
             next()
     }

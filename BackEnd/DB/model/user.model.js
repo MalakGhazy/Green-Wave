@@ -5,12 +5,12 @@ const userSchema = new Schema(
         firstName:{
             type:String,
             lowercase:true,
-            required: true,
+            //required: true,
         },
         lastName:{
             type : String,
             lowercase:true,
-            required :true,
+            //required :true,
         },
         /*name : {
             type:String,

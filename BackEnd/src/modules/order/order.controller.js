@@ -12,7 +12,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 
 export const createOrder = async(req,res,next)=>{
     let product,itemTypeModel;
-    let{items,address,phone,notes,coupon,paymentMethod}= req.body
+    let{items,address,phone,note,coupon,paymentMethod}= req.body
     const userId=req.user._id
     // Coupon Part 
     
@@ -70,22 +70,42 @@ export const createOrder = async(req,res,next)=>{
         console.log(item);
 
         existedItems.push({
-            quantity:item.quantity,
-            totalPrice:product.price * item.quantity,
-            product,
+            product: item.product ? {
+                productId: product._id,
+                name: product.name,
+                price: product.price,
+                paymentPrice: product.paymentPrice,
+                quantity: item.product.quantity
+            } : undefined,
+            book: item.book ? {
+                bookId: product._id,
+                title: product.title,
+                author: product.author,
+                genre: product.genre,
+                price: product.price,
+                quantity: item.book.quantity
+            } : undefined,
+            course: item.course ? {
+                courseId: product._id,
+                title: product.title,
+                price: product.price,
+                quantity: item.course.quantity
+            } : undefined,
         });
         foundedIds.push(product._id);
 
         if (!item.course) { // Courses do not have stock
             arrayForStock.push({
                 _id: product._id,
-                quantity: item.quantity,
+                quantity: item.product ? item.product.quantity : item.book.quantity
             });
         }
+        totalPrice += product.price * (item.product ? item.product.quantity : item.book ? item.book.quantity : item.course.quantity);
     }
-    existedItems.forEach((ele)=>{
+    /*existedItems.forEach((ele)=>{
         totalPrice+=ele.totalPrice
-    })
+    })*/
+
     // Apply coupon if exists
     let discount=0;
     if(coupon){
@@ -103,7 +123,6 @@ export const createOrder = async(req,res,next)=>{
             return next(new ErrorClass(`Error fetching coupon: ${error.message}`, StatusCodes.INTERNAL_SERVER_ERROR));
         }
     }
-
 
     //Update Stock
     for(let item of arrayForStock){
@@ -129,7 +148,7 @@ export const createOrder = async(req,res,next)=>{
         items:existedItems,
         address,
         phone,
-        notes,
+        note,
         coupon,
         price :totalPrice,
         paymentPrice:totalPrice,
@@ -165,7 +184,7 @@ export const createOrder = async(req,res,next)=>{
                         },
                         unit_amount: (element.product ? element.product?.paymentPrice : element.book ? element.book?.price : element.course?.price) * 100
                     },
-                    quantity:element.quantity
+                    quantity: element.product ? element.product.quantity : element.book ? element.book.quantity : element.course.quantity
                 }
             })
         })
@@ -202,9 +221,9 @@ export const createOrder = async(req,res,next)=>{
             items: 
             { $or: 
                 [
-                    { 'productId': { $in: foundedIds } }, 
-                    { 'bookId': { $in: foundedIds } },
-                    { 'courseId': { $in: foundedIds } }
+                    { 'product.productId': { $in: foundedIds } }, 
+                    { 'book.bookId': { $in: foundedIds } },
+                    { 'course.courseId': { $in: foundedIds } }
                 ] 
             } } 
     }
@@ -215,7 +234,7 @@ export const createOrder = async(req,res,next)=>{
         await couponModel.updateOne({code:req.body.coupon.code},
         {
             $addToSet:{
-                    UsedBy:req.user._id
+                UsedBy:req.user._id
             }
         })
     }

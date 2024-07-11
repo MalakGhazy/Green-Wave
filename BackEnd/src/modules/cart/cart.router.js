@@ -4,8 +4,8 @@ import { auth, roles } from '../../middleware/auth.js';
 
 const router = Router();
 
-router.post('/add',auth([roles.user]), cartController.addItemToCart);
-router.delete('/remove/:itemId',auth([roles.user]),cartController.removeItemFromCart);
-router.get('/getall',auth([roles.user]), cartController.getCartItems);
+router.post('/add',auth(), cartController.addItemToCart);
+router.delete('/remove/:itemId',auth(),cartController.removeItemFromCart);
+router.get('/getall',auth(), cartController.getCartItems);
 
 export default router;

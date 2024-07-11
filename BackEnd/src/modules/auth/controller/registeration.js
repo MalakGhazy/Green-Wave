@@ -171,6 +171,29 @@ export const logout = async(req,res,next)=>{
     res.status(StatusCodes.OK).json({ message: 'Logged out successfully' });
 }
 
+// ============= Default Admin Addition ======================
+export const createDefaultAdmins = async()=>{
+    const defaultAdmins=[
+        { email: "admin1@example.com", password: "123456", role: "Admin"},
+        {email: "admin2@example.com", password: "abcdef", role: "Admin"},
+        {email: "admin3@example.com", password: "1z3y5x", role: "Admin"},
+    ];
+    try {
+        for (const admin of defaultAdmins) {
+          const existingAdmin = await userModel.findOne({ email: admin.email });
+    
+          if (!existingAdmin) {
+            const newAdmin = new userModel(admin);
+            await newAdmin.save();
+            console.log(`Admin ${admin.email} created successfully`);
+          } else {
+            console.log(`Admin ${admin.email} already exists`);
+          }
+        }
+      } catch (error) {
+        console.error("Error creating default admins:", error);
+      }
+}
 
 
 

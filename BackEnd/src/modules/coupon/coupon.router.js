@@ -4,7 +4,7 @@ import { auth, roles } from "../../middleware/auth.js";
 
 const router= Router()
 
-router.post('/create',auth([roles.user]),couponRouter.addCoupon)
+router.post('/create',auth(),couponRouter.addCoupon)
 
 export default router
 

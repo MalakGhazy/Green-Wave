@@ -14,13 +14,13 @@ router.patch('/send-code',authController.sendCode)
 
 router.patch('/reset-pass',authController.resetPassword)
 
-router.patch('/update',auth([roles.user]),authController.UpdateUser)
+router.patch('/update',auth(),authController.UpdateUser)
 
-router.patch('/change-pass',auth([roles.user]),authController.changePass)
+router.patch('/change-pass',auth(),authController.changePass)
 
-router.patch('/soft-del',auth([roles.user]),authController.softDelete)
+router.patch('/soft-del',auth(),authController.softDelete)
 
-router.post('/logout',auth([auth.user]),authController.logout)
+router.post('/logout',auth(),authController.logout)
 
 export default router
 

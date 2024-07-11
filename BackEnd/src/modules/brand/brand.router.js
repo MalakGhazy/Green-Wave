@@ -4,11 +4,11 @@ import { auth, roles } from "../../middleware/auth.js";
 
 const router=Router()
 
-router.post('/add',auth([roles.admin]),brandController.addBrand)
+router.post('/add',auth(),brandController.addBrand)
 
-router.put('/update/:brandId',auth([roles.admin]),brandController.updateBrand)
+router.put('/update/:brandId',auth(),brandController.updateBrand)
 
-router.delete('/delete/:brandId',auth([roles.admin]),brandController.DeleteBrand)
+router.delete('/delete/:brandId',auth(),brandController.DeleteBrand)
 
 router.get('/search/:searchkey',brandController.SearchByName)
 
