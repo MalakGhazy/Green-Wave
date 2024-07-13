@@ -111,10 +111,9 @@ function generateInvoiceTable(doc, invoice) {
         "",
         "",
         "Subtotal",
-        "",
+        //invoice.subtotal.toFixed(2)
         formatCurrency(invoice.subtotal*100)
     );
-
     const paidToDatePosition = subtotalPosition + 20;
     generateTableRow(
         doc,
@@ -122,7 +121,6 @@ function generateInvoiceTable(doc, invoice) {
         "",
         "",
         "Discounted Amount",
-        "",
         formatCurrency((invoice.subtotal - invoice.customer.TotalPrice)*100)
     );
 
@@ -134,7 +132,6 @@ function generateInvoiceTable(doc, invoice) {
         "",
         "",
         "Balance Due",
-        "",
         formatCurrency(invoice.customer.TotalPrice*100)
     );
     doc.font("Helvetica");

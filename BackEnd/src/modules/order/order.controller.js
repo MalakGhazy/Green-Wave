@@ -35,19 +35,19 @@ export const createOrder = async(req,res,next)=>{
         }
         if (isCouponExist.UsedBy.length > isCouponExist.numofUses) 
         {
-                return next(new ErrorClass("This coupon exceeded the usage limit", 410))
+            return next(new ErrorClass("This coupon exceeded the usage limit", 410))
         }
         if (isCouponExist.UsedBy.includes(req.user._id)) 
         {
-                return next(new ErrorClass("You've already claimed this coupon", 410))
+            return next(new ErrorClass("You've already claimed this coupon", 410))
         }
         req.body.coupon = isCouponExist
     }
 
     const cart = await cartModel.findOne({userId:req.user._id})
-    if(!items)
+    if(!items || !items.length)
     {
-        if(!cart.items.length){
+        if(!cart.items.length || !cart.items.length){
             return next(new ErrorClass('CART IS EMPTY!',StatusCodes.NOT_FOUND))
         }
         items=cart.items
@@ -78,7 +78,12 @@ export const createOrder = async(req,res,next)=>{
         if (!product) {
             return next(new ErrorClass(`Item with id ${item.itemId} not found`, StatusCodes.NOT_FOUND));
         }
-        console.log(item);
+
+            if (!product.stock || product.stock < (item.product ? item.product.quantity : item.book ? item.book.quantity : item.course.quantity)) {
+        return next(new ErrorClass(`Item with id ${item.itemId} is out of stock`, StatusCodes.BAD_REQUEST));
+    }
+
+       // console.log(item);
 
         existedItems.push({
             product: item.product ? {
@@ -104,8 +109,7 @@ export const createOrder = async(req,res,next)=>{
             } : undefined,
         });
         foundedIds.push(product._id);
-        //foundedIds.push(new mongoose.Types.ObjectId(product._id));
-        console.log(foundedIds);
+        //console.log(foundedIds);
 
         if (!item.course) { // Courses do not have stock
             arrayForStock.push({
@@ -178,10 +182,28 @@ export const createOrder = async(req,res,next)=>{
             address
         },
         items: existedItems.map(product => {
+            let itemName;
+            let itemQuantity;
+            let itemPrice;
+            
+            if (product.product) {
+                itemName = product.product.name;
+                itemQuantity = product.product.quantity;
+                itemPrice = product.product.paymentPrice;
+            } else if (product.book) {
+                itemName = product.book.title;
+                itemQuantity = product.book.quantity;
+                itemPrice = product.book.price;
+            } else if (product.course) {
+                itemName = product.course.title;
+                itemQuantity = product.course.quantity;
+                itemPrice = product.course.price;
+            }
             return {
-                item: product.product.name,
-                quantity: product.quantity,
-                amount: product.product.paymentPrice * 100
+                item:itemName,
+                quantity: itemQuantity,
+                amount: itemPrice * 100,
+                lineTotal : itemPrice * itemQuantity
             }
         }),
         subtotal: totalPrice,
