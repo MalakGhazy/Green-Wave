@@ -7,11 +7,21 @@ import bookModel from "../../../DB/model/book.model.js";
 import courseModel from "../../../DB/model/course.model.js";
 import ordermodel from "../../../DB/model/order.js";
 import { ErrorClass } from "../../utils/errorClass.js";
+import {fileURLToPath} from "url"
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+import path from "path";
+import sendEmail from "../../utils/email.js";
+import { createInvoice } from "../../utils/createInvoice.js";
+import fs from "fs"
+
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 
 export const createOrder = async(req,res,next)=>{
-    let product,itemTypeModel;
+
+    let itemTypeModel;
+    let product;
+
     let{items,address,phone,note,coupon,paymentMethod}= req.body
     const userId=req.user._id
     // Coupon Part 
@@ -49,6 +59,7 @@ export const createOrder = async(req,res,next)=>{
     var totalPrice = 0;
 
     for(let item of items){
+
         if (item.product && item.product.productId) {
             itemTypeModel = productModel;
             product = await itemTypeModel.findById(item.product.productId);
@@ -93,6 +104,8 @@ export const createOrder = async(req,res,next)=>{
             } : undefined,
         });
         foundedIds.push(product._id);
+        //foundedIds.push(new mongoose.Types.ObjectId(product._id));
+        console.log(foundedIds);
 
         if (!item.course) { // Courses do not have stock
             arrayForStock.push({
@@ -151,10 +164,40 @@ export const createOrder = async(req,res,next)=>{
         note,
         coupon,
         price :totalPrice,
-        paymentPrice:totalPrice,
+        paymentPrice : totalPrice,
         paymentMethod,
     });
+
+    //invoice 
+    const invoice = {
+        customer:{
+            id: order._id,
+            email: req.user.email,
+            TotalPrice: order.paymentPrice,
+            name: req.user.name,
+            address
+        },
+        items: existedItems.map(product => {
+            return {
+                item: product.product.name,
+                quantity: product.quantity,
+                amount: product.product.paymentPrice * 100
+            }
+        }),
+        subtotal: totalPrice,
+    }
     
+    const pdfPath = path.join(__dirname, `../../../utils/pdf/${req.user._id}.pdf`)
+    createInvoice(invoice, pdfPath);
+    await sendEmail({
+        to: req.user.email, subject: "Invoice", attachments: [{
+            filename: 'order invoice',
+            path: pdfPath,
+            contentType: 'application/pdf'
+        }]
+    })
+    fs.unlinkSync(pdfPath)
+
     // Use Stripe For Payment
     if(paymentMethod === 'Card'){
         try{
@@ -180,11 +223,24 @@ export const createOrder = async(req,res,next)=>{
                     price_data:{
                         currency:'EGP',
                         product_data:{
-                            name: element.product ? element.product?.name : element.book ? element.book?.title : element.course?.title
+                            name: element.product 
+                            ? element.product?.name 
+                            : element.book 
+                            ? element.book?.title 
+                            : element.course?.title
                         },
-                        unit_amount: (element.product ? element.product?.paymentPrice : element.book ? element.book?.price : element.course?.price) * 100
+                        unit_amount: 
+                        (element.product 
+                            ? element.product?.paymentPrice 
+                            : element.book 
+                            ? element.book?.price 
+                            : element.course?.price) * 100
                     },
-                    quantity: element.product ? element.product.quantity : element.book ? element.book.quantity : element.course.quantity
+                    quantity: element.product 
+                    ? element.product.quantity 
+                    : element.book 
+                    ? element.book.quantity 
+                    : element.course.quantity
                 }
             })
         })
@@ -218,14 +274,14 @@ export const createOrder = async(req,res,next)=>{
     { userId: req.user._id },
     { 
         $pull: { 
-            items: 
-            { $or: 
-                [
-                    { 'product.productId': { $in: foundedIds } }, 
-                    { 'book.bookId': { $in: foundedIds } },
-                    { 'course.courseId': { $in: foundedIds } }
+            items: {
+                $or:[
+                    { 'productId': { $in: foundedIds } }, 
+                    { 'bookId': { $in: foundedIds } },
+                    { 'courseId': { $in: foundedIds } }
                 ] 
-            } } 
+            } 
+        } 
     }
 );
 

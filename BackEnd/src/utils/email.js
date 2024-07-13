@@ -1,92 +1,91 @@
-export const createHtml=(Text)=>{
+export const createHtml = (Text) => {
     return `<!DOCTYPE html>
                 <html>
                 <head>
-                    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"></head>
-                <style type="text/css">
-                body{background-color: #88BDBF;margin: 0px;}
-                </style>
-                <body style="margin:0px;"> 
-                <table border="0" width="50%" style="margin:auto;padding:30px;background-color: #F3F3F3;border:1px solid #630E2B;">
-                <tr>
-                <td>
-                <table border="0" width="100%">
-                <tr>
-                <td>
-                <h1>
-                    <img width="100px" src="https://res.cloudinary.com/ddajommsw/image/upload/v1670702280/Group_35052_icaysu.png"/>
-                </h1>
-                </td>
-                <td>
-                <p style="text-align: right;"><a href="http://localhost:4200/#/" target="_blank" style="text-decoration: none;">View In Website</a></p>
-                </td>
-                </tr>
-                </table>
-                </td>
-                </tr>
-                <tr>
-                <td>
-                <table border="0" cellpadding="0" cellspacing="0" style="text-align:center;width:100%;background-color: #fff;">
-                <tr>
-                <td style="background-color:#630E2B;height:100px;font-size:50px;color:#fff;">
-                <img width="50px" height="50px" src="https://res.cloudinary.com/ddajommsw/image/upload/v1670703716/Screenshot_1100_yne3vo.png">
-                </td>
-                </tr>
-                <tr>
-                <td>
-                <h1 style="padding-top:25px; color:#630E2B">Email Confirmation</h1>
-                </td>
-                </tr>
-                <tr>
-                <td>
-                <p style="padding:0px 100px;">
-                </p>
-                </td>
-                </tr>
-                <tr>
-                <td>
-                <p  style="margin:10px 0px 30px 0px;border-radius:4px;padding:10px 20px;border: 0;color:#fff;background-color:#630E2B; ">${Text}</p>
-                </td>
-                </tr>
-                </table>
-                </td>
-                </tr>
-                <tr>
-                <td>
-                <table border="0" width="100%" style="border-radius: 5px;text-align: center;">
-                <tr>
-                <td>
-                <h3 style="margin-top:10px; color:#000">Stay in touch</h3>
-                </td>
-                </tr>
-                <tr>
-                <td>
-                <div style="margin-top:20px;">
-
-                <a href="${process.env.facebookLink}" style="text-decoration: none;"><span class="twit" style="padding:10px 9px;color:#fff;border-radius:50%;">
-                <img src="https://res.cloudinary.com/ddajommsw/image/upload/v1670703402/Group35062_erj5dx.png" width="50px" hight="50px"></span></a>
-                
-                <a href="${process.env.instegram}" style="text-decoration: none;"><span class="twit" style="padding:10px 9px;color:#fff;border-radius:50%;">
-                <img src="https://res.cloudinary.com/ddajommsw/image/upload/v1670703402/Group35063_zottpo.png" width="50px" hight="50px"></span>
-                </a>
-                
-                <a href="${process.env.twitterLink}" style="text-decoration: none;"><span class="twit" style="padding:10px 9px;;color:#fff;border-radius:50%;">
-                <img src="https://res.cloudinary.com/ddajommsw/image/upload/v1670703402/Group_35064_i8qtfd.png" width="50px" hight="50px"></span>
-                </a>
-
-                </div>
-                </td>
-                </tr>
-                </table>
-                </td>
-                </tr>
-                </table>
+                    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+                    <style type="text/css">
+                        body {
+                            background: linear-gradient(to right, #32a852, #88bdbf);
+                            margin: 0;
+                            font-family: Arial, sans-serif;
+                        }
+                        .container {
+                            width: 50%;
+                            margin: auto;
+                            padding: 30px;
+                            background-color: #F3F3F3;
+                            border: 1px solid #2E8B57;
+                            border-radius: 10px;
+                        }
+                        .header {
+                            text-align: center;
+                        }
+                        .header h1 {
+                            margin: 0;
+                        }
+                        .header img {
+                            width: 100px;
+                        }
+                        .content {
+                            text-align: center;
+                            background-color: #fff;
+                            padding: 20px;
+                            border-radius: 10px;
+                        }
+                        .content h1 {
+                            padding-top: 25px;
+                            color: #2E8B57;
+                        }
+                        .content p {
+                            padding: 0 100px;
+                            color: #555;
+                        }
+                        .content .message {
+                            margin: 10px 0 30px 0;
+                            border-radius: 4px;
+                            padding: 10px 20px;
+                            color: #fff;
+                            background-color: #2E8B57;
+                        }
+                        .footer {
+                            text-align: center;
+                            border-radius: 5px;
+                            padding-top: 10px;
+                        }
+                        .footer h3 {
+                            margin-top: 10px;
+                            color: #000;
+                        }
+                        .social-icons a {
+                            text-decoration: none;
+                            margin: 0 5px;
+                        }
+                        .social-icons img {
+                            width: 50px;
+                            height: 50px;
+                            border-radius: 50%;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <h1><img src="https://res.cloudinary.com/dqvaypijl/image/upload/v1720843471/Logo_ay3dsl.jpg" alt="GreenWave Logo" /></h1>
+                        </div>
+                        <div class="content">
+                            <div style="background-color: #2E8B57; height: 100px; font-size: 50px; color: #fff;">
+                                <img src="https://res.cloudinary.com/ddajommsw/image/upload/v1670703716/Screenshot_1100_yne3vo.png" alt="Icon" style="width: 50px; height: 50px; margin-top: 25px;">
+                            </div>
+                            <h1>Email Confirmation</h1>
+                            <p class="message">${Text}</p>
+                        </div>
+                    </div>
                 </body>
-                </html>`
-}
+                </html>`;
+};
 import nodemailer from 'nodemailer';
 
-async function sendEmail ({to,subject,html}={}){
+async function sendEmail ({to,subject,html,attachments = []}={}){
     let transporter = nodemailer.createTransport({
         service:'gmail',
         auth:{
@@ -102,7 +101,7 @@ async function sendEmail ({to,subject,html}={}){
         to,
         subject,
         html,
-        //attachments
+        attachments
     });
 
     return info.rejected.length ?false : true

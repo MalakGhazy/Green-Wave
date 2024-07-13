@@ -34,96 +34,62 @@ export const addReview = async(req,res,next) => {
     if (!item) {
         return next(new Error("ITEM NOT FOUND!",StatusCodes.NOT_FOUND));
     }
-    // check Type of item 
-    if (productId) {
-        const alreadyReviewed = await reviewModel.findOne({
-            userId: req.user._id,
-            productId: productId
-        })
+        // Check if the user has already reviewed this item
+        const alreadyReviewed = await reviewModel.findOne({ userId: req.user._id, ...req.body });
         if (alreadyReviewed) {
-            return next(new ErrorClass("you already reviewed this product!", 409))
+            return next(new ErrorClass(`You already reviewed this item!`, StatusCodes.CONFLICT));
         }
-
-       // Debugging: Check userId and productId
-        console.log(`Checking order for user: ${req.user._id} and product: ${productId}`);
-
-        // check order 
-        const order = await ordermodel.findOne({
-            userId:req.user_id,
-            status:'delivered',
-            'items.product.productId':productId
-        })
-        // Debugging: Log order details
-        console.log(`Order found: ${JSON.stringify(order)}`);
-        
-
-        console.log(order);
-        if (!order)  {
-            return next(new ErrorClass("you are not authorized to review this order!", 403))
-        }
-        // add review
-        const review = await reviewModel.create({comment,productId,userId:req.user._id})   
-        return res.status(202).json({ message: "Done!", review })  
-    }
-    else if (bookId) {
-        const alreadyReviewed = await reviewModel.findOne({
-            userId: req.user._id,
-            bookId: bookId
-        })
-        if (alreadyReviewed) {
-            return next(new ErrorClass("you already reviewed this book!", 409))
-        }
-            // check order
-            const order = await ordermodel.findOne({
-                userId:req.user_id,
-                status:'delivered',
-                'items.book.bookId':bookId
-            })
-            if (!order)  {
-                return next(new ErrorClass("you are not authorized to review this order!", 403))
+    
+        // If reviewing an article, simply create the review
+        if (articleId) {
+            try {
+                const review = await reviewModel.create({
+                    comment,
+                    articleId,
+                    userId: req.user._id
+                });
+                return res.status(StatusCodes.ACCEPTED).json({ message: "Review added successfully", review });
+            } catch (error) {
+                return next(new ErrorClass(`Error adding review: ${error.message}`, StatusCodes.INTERNAL_SERVER_ERROR));
             }
-            
-            // add review
-        const review = await reviewModel.create({comment,bookId,userId:req.user._id})  
-        return res.status(202).json({ message: "Done!", review })  
-    } 
-    else if (courseId) 
-    {
-        const alreadyReviewed = await reviewModel.findOne({
-            userId: req.user._id,
-            courseId: courseId
-        })
-        if (alreadyReviewed) {
-            return next(new ErrorClass("you already reviewed this course!", 409))
         }
-            // check order 
-            const order = await ordermodel.findOne({
-                userId:req.user_id,
-                status:'delivered',
-                'items.course.courseId':courseId
-            })
-            if (!order)  {
-                return next(new ErrorClass("you are not authorized to review this order!", 403))
-            }
-            // add review
-            const review = await reviewModel.create({comment,courseId,userId:req.user._id})  
-            return res.status(202).json({ message: "Done!", review })  
-    }
-    else if (articleId)
-    {
-        const alreadyReviewed = await reviewModel.findOne({
+    
+        // For other item types (product, book, course), validate the order before adding the review
+        const orderQuery = {
             userId: req.user._id,
-            articleId: articleId
-        })
-        if (alreadyReviewed) {
-            return next(new ErrorClass("you already reviewed this article!", 409))
+            status: 'delivered',
+        };
+    
+        if (productId) {
+            orderQuery['items.product.productId'] = productId;
+        } else if (bookId) {
+            orderQuery['items.book.bookId'] = bookId;
+        } else if (courseId) {
+            orderQuery['items.course.courseId'] = courseId;
         }
-        // add review
-        const review = await reviewModel.create({comment,articleId,userId:req.user._id})
-        return res.status(202).json({ message: "Done!", review })  
-
-    }
-}
+    
+        const order = await ordermodel.findOne(orderQuery);
+        if (!order) {
+            return next(new ErrorClass("You are not authorized to review this item!", StatusCodes.FORBIDDEN));
+        }
+    
+        try {
+            const review = await reviewModel.create({
+                comment,
+                productId,
+                bookId,
+                courseId,
+                userId: req.user._id
+            });
+            /*const newAvg = ((item.avgRate * item.rate) + rating) / (item.rate + 1)
+            item.avgRate = newAvg
+            item.rate = item.rate + 1
+            await item.save()*/
+            return res.status(StatusCodes.ACCEPTED).json({ message: "Review added successfully", review });
+        } catch (error) {
+            return next(new ErrorClass(`Error adding review: ${error.message}`, StatusCodes.INTERNAL_SERVER_ERROR));
+        }
+} 
 // ============ 2] Get all user reviews ====================
 export const getUserReviews = async(req,res,next)=>{
     const reviews = await reviewModel.find({userId:req.user_id})
